@@ -1,0 +1,80 @@
+services:
+  mongo:
+    image: mongo:7.0
+    command: --replSet rs0 --bind_ip_all --quiet
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_storage:/data/db
+
+    # Initializes the MongoDB replica set. This service will not usually be actively running
+  mongo-rs-init:
+    image: mongo:7.0
+    depends_on:
+      - mongo
+    restart: on-failure
+    entrypoint:
+      - bash
+      - -c
+      - 'mongosh --host mongo:27017 --eval ''try{rs.status().ok && quit(0)} catch {} rs.initiate({_id: "rs0", version: 1, members: [{ _id: 0, host : "mongo:27017" }]})'''
+
+  powersync:
+    restart: unless-stopped
+    image: journeyapps/powersync-service:1.3.4
+    command: [ "start", "-r", "unified" ]
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/powersync.yaml
+      # Service memory limits should be adjusted to roughly 80 percent of the system memory capacity
+      NODE_OPTIONS: --max-old-space-size=1000
+      PS_DATA_SOURCE_URI: ${POSTGRES_URI}
+      PS_MONGO_URI: mongodb://mongo:27017/powersync_demo
+      PS_POSTGRES_URI: ${POSTGRES_URI}
+#      PS_JWKS_URL: ${PS_JWKS_URL}
+      # The port which the PowerSync API server should run on
+      PS_PORT: ${PS_PORT}
+    depends_on:
+      mongo-rs-init:
+        condition: service_completed_successfully
+        # MongoDB support is available via this image version
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${PS_PORT}/probes/liveness').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+        ]
+      interval: 5s
+      timeout: 1s
+      retries: 15
+    ports:
+      - ${PS_PORT}:${PS_PORT}
+    volumes:
+      - ./config:/config
+
+  pg-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_DATABASE_USER}
+      - POSTGRES_DB=${POSTGRES_DATABASE_NAME}
+      - POSTGRES_PASSWORD=${POSTGRES_DATABASE_PASSWORD}
+      - PGPORT=${POSTGRES_DATABASE_PORT}
+    ports:
+      - "${POSTGRES_DATABASE_PORT}:${POSTGRES_DATABASE_PORT}"
+    command: ["postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_DATABASE_USER} -d ${POSTGRES_DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+volumes:
+  # MongoDB replication data
+  mongo_storage:
+  # Postgres data
+  pg_data:
