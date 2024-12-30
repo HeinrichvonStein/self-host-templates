@@ -1,3 +1,4 @@
 /.idea/
 
 PostgreSQL/.env
+MySQL/.env
