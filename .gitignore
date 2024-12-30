@@ -2,3 +2,4 @@
 
 PostgreSQL/.env
 MySQL/.env
+MongoDB/.env

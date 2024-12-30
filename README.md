@@ -3,5 +3,6 @@
 This repository contains templates for the self-hosted PowerSync service.
 
 # Supported templates
-- [PostgreSQL](PostgreSQL)
+- [MongoDB](MongoDB)
 - [MySQL](PostgreSQL)
+- [PostgreSQL](PostgreSQL)
