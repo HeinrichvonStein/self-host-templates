@@ -32,8 +32,3 @@ client_auth:
   #        k: 'UPDATE THIS'
   #        alg: 'HS256'
   audience: ["powersync-dev", "powersync", "http://localhost:8080"]
-#
-#api:
-#  tokens:
-#    # These tokens are used for local admin API route authentication
-#    - UPDATE THIS
