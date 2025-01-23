@@ -21,7 +21,7 @@ services:
 
   powersync:
     restart: unless-stopped
-    image: journeyapps/powersync-service:1.3.4
+    image: journeyapps/powersync-service:latest
     command: [ "start", "-r", "unified" ]
     environment:
       POWERSYNC_CONFIG_PATH: /config/powersync.yaml
