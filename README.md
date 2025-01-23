@@ -1,6 +1,6 @@
 # Self Host templates
 
-This repository contains templates for the self-hosted PowerSync service.
+This repository contains templates for the self-hosted [PowerSync Service](https://github.com/powersync-ja/powersync-service).
 
 # Supported templates
 - [MongoDB](MongoDB)
